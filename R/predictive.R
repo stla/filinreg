@@ -33,7 +33,7 @@ filinregPredictive <- function(fidsamples, newdata){
   out <- matrix(NA_real_, nrow = N, ncol = n)
   colnames(out) <- paste0("y", seq_len(n))
   for(i in 1L:N){
-    out[i, ] <- X %*% Beta[, i] + rdistr(n)
+    out[i, ] <- X %*% Beta[, i] + sigma[i]*rdistr(n)
   }
   out <- list(FPD = as.data.frame(out), weight = fidsamples[["weight"]])
   class(out) <- c("filinreg", "filinreg.pred")
