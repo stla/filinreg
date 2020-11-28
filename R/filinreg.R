@@ -19,8 +19,8 @@
 #' @importFrom arrangements icombinations
 #' @importFrom EigenR Eigen_rank Eigen_inverse
 #' @importFrom utils head
-#' @importFrom stats dt qt dlogis qlogis model.matrix
-#' @importFrom lazyeval f_eval_lhs
+#' @importFrom stats dt qt dlogis qlogis model.matrix as.formula
+#' @importFrom lazyeval f_eval_lhs f_rhs
 #' @export
 filinreg <- function(
   formula, data = NULL, distr = "student", df = Inf, L = 10L, lucky = FALSE
@@ -92,7 +92,7 @@ filinreg <- function(
       if(theta[q] > 0){ # sigma>0
         counter <- counter + 1L
         J[counter] <-
-          sum(ddistr((ymI - XmI %*% head(theta, -1L))/theta[q], log = TRUE)) -
+          sum(ddistr((ymI - XmI %*% head(theta, -1L))/theta[q])) -
           (n-q) * log(theta[q])
         Theta[counter,] <- theta
       }
@@ -105,7 +105,9 @@ filinreg <- function(
   )
   attr(out, "distr") <- distr
   attr(out, "df") <- df
-  attr(out, "formula") <- formula
+  attr(out, "formula") <- as.formula(
+    paste0("~ ", paste0(as.character(f_rhs(formula))[-1L], collapse = " + "))
+  )
   class(out) <- "filinreg"
   out
 }
