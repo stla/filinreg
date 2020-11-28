@@ -5,6 +5,10 @@
 #'
 #' @param formula xx
 #' @param data xx
+#' @param distr the distribution of the error terms, \code{"student"} or
+#'   \code{"logistic"}
+#' @param df degrees of freedom of the Student distribution if
+#'   \code{distr = "student"}
 #' @param L xx
 #' @param lucky xx
 #'
@@ -15,14 +19,20 @@
 #' @importFrom arrangements icombinations
 #' @importFrom EigenR Eigen_rank Eigen_inverse
 #' @importFrom utils head
-#' @importFrom stats dt qt model.matrix
+#' @importFrom stats dt qt dlogis qlogis model.matrix
 #' @importFrom lazyeval f_eval_lhs
 #' @export
 filinreg <- function(
-  formula, data = NULL, df = Inf, L = 10L, lucky = FALSE
+  formula, data = NULL, distr = "student", df = Inf, L = 10L, lucky = FALSE
 ){
-  qdistr <- function(x, ...) qt(x, df=df, ...)
-  ddistr <- function(x, ...) dt(x, df=df, ...)
+  distr <- match.arg(distr, c("student", "logistic"))
+  if(distr == "student"){
+    qdistr <- function(x) qt(x, df = df)
+    ddistr <- function(x) dt(x, df = df, log = TRUE)
+  }else{
+    qdistr <- function(x) qlogis(x)
+    ddistr <- function(x) dlogis(x, log = TRUE)
+  }
   y <- f_eval_lhs(formula, data = data)
   X <- unname(model.matrix(formula, data = data))
   n <- nrow(X)
@@ -48,7 +58,7 @@ filinreg <- function(
   Iiterator <- icombinations(n, q)
   I <- Iiterator$getnext()
   XI <- X[I, ]
-  while(Eigen_rank(XI) < p){ #TODO check X full rank at the beginning
+  while(Eigen_rank(XI) < p){
     I <- Iiterator$getnext()
     XI <- X[I, ]
   }
@@ -63,7 +73,7 @@ filinreg <- function(
       if(theta[q] > 0){ # sigma>0
         counter <- counter + 1L
         J[counter] <-
-          sum(ddistr((ymI - XmI %*% head(theta, -1L))/theta[q], log = TRUE)) -
+          sum(ddistr((ymI - XmI %*% head(theta, -1L))/theta[q])) -
           (n-q) * log(theta[q])
         Theta[counter,] <- theta
       }
