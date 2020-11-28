@@ -18,6 +18,15 @@ inference <- function(fidsamples, param, alpha = 0.05){
   out
 }
 
+#' Title
+#'
+#' @param fidsamples xx
+#' @param conf confidence level
+#'
+#' @return xx
+#' @export
+#'
+#' @examples xx
 fiSummary <- function(fidsamples, conf = 0.95){
   sims <- if(inherits(gfi, "filinreg.pred")){
     fidsamples[["FPD"]]
@@ -30,3 +39,24 @@ fiSummary <- function(fidsamples, conf = 0.95){
   out
 }
 
+#' Title
+#'
+#' @param parameter xx
+#' @param fidsamples xx
+#' @param conf xx
+#'
+#' @return xx
+#'
+#' @importFrom lazyeval f_eval_rhs
+#' @importFrom spatstat ewcdf quantile.ewcdf
+#' @export
+#'
+#' @examples xx
+fiConfInt <- function(parameter, fidsamples, conf = 0.95){
+  dataName <- ifelse(inherits(fidsamples, "filinreg.pred"), "FPD", "Theta")
+  data <- fidsamples[[dataName]]
+  fsims <- f_eval_rhs(parameter, data = data)
+  fcdf <- ewcdf(fsims, weights = fidsamples[["weight"]])
+  alpha <- 1 - conf
+  quantile.ewcdf(fcdf, c(alpha/2, 1-alpha/2))
+}
