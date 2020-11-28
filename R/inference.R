@@ -75,3 +75,21 @@ fiConfInt <- function(parameter, fidsamples, conf = 0.95){
   alpha <- 1 - conf
   quantile.ewcdf(fcdf, c(alpha/2, 1-alpha/2))
 }
+
+#' Title
+#'
+#' @param parameter xx
+#' @param fidsamples xx
+#' @param probs xx
+#'
+#' @return xx
+#'
+#' @importFrom spatstat quantile.ewcdf
+#' @export
+#'
+#' @examples xx
+fiQuantile <- function(parameter, fidsamples, probs){
+  fcdf <- fiCDF(parameter, fidsamples)
+  quantile.ewcdf(fcdf, probs = probs)
+}
+
