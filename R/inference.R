@@ -43,20 +43,35 @@ fiSummary <- function(fidsamples, conf = 0.95){
 #'
 #' @param parameter xx
 #' @param fidsamples xx
-#' @param conf xx
 #'
 #' @return xx
 #'
 #' @importFrom lazyeval f_eval_rhs
-#' @importFrom spatstat ewcdf quantile.ewcdf
+#' @importFrom spatstat ewcdf
+#' @export
+#'
+#' @examples xx
+fiCDF <- function(parameter, fidsamples){
+  dataName <- ifelse(inherits(fidsamples, "filinreg.pred"), "FPD", "Theta")
+  data <- fidsamples[[dataName]]
+  fsims <- f_eval_rhs(parameter, data = data)
+  ewcdf(fsims, weights = fidsamples[["weight"]])
+}
+
+#' Title
+#'
+#' @param parameter xx
+#' @param fidsamples xx
+#' @param conf xx
+#'
+#' @return xx
+#'
+#' @importFrom spatstat quantile.ewcdf
 #' @export
 #'
 #' @examples xx
 fiConfInt <- function(parameter, fidsamples, conf = 0.95){
-  dataName <- ifelse(inherits(fidsamples, "filinreg.pred"), "FPD", "Theta")
-  data <- fidsamples[[dataName]]
-  fsims <- f_eval_rhs(parameter, data = data)
-  fcdf <- ewcdf(fsims, weights = fidsamples[["weight"]])
+  fcdf <- fiCDF(parameter, fidsamples)
   alpha <- 1 - conf
   quantile.ewcdf(fcdf, c(alpha/2, 1-alpha/2))
 }
