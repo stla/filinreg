@@ -105,8 +105,10 @@ filinreg <- function(
   )
   attr(out, "distr") <- distr
   attr(out, "df") <- df
+  rhs <- as.character(f_rhs(formula))
+  if(rhs[1L] == "+") rhs <- rhs[-1L]
   attr(out, "formula") <- as.formula(
-    paste0("~ ", paste0(as.character(f_rhs(formula))[-1L], collapse = " + "))
+    paste0("~ ", paste0(rhs, collapse = " + "))
   )
   class(out) <- "filinreg"
   out

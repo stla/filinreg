@@ -28,7 +28,7 @@ inference <- function(fidsamples, param, alpha = 0.05){
 #'
 #' @examples xx
 fiSummary <- function(fidsamples, conf = 0.95){
-  sims <- if(inherits(gfi, "filinreg.pred")){
+  sims <- if(inherits(fidsamples, "filinreg.pred")){
     fidsamples[["FPD"]]
   }else fidsamples[["Theta"]]
   seq_ <- 1L:ncol(sims)
