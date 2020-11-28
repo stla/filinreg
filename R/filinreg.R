@@ -1,25 +1,35 @@
-#' Fiducial sampler for linear regression model
+#' @name filinreg
+#' @rdname filinreg
+#' @title Fiducial sampler for linear regression model
 #' @description ddd
 #'
-#' @param y xx
-#' @param X xx
+#' @param formula xx
+#' @param data xx
 #' @param L xx
 #' @param lucky xx
+#'
+#' @return xxx
 #'
 #' @examples xxx
 #'
 #' @importFrom arrangements icombinations
 #' @importFrom EigenR Eigen_rank Eigen_inverse
 #' @importFrom utils head
+#' @importFrom stats dt qt model.matrix
+#' @importFrom lazyeval f_eval_lhs
 #' @export
 filinreg <- function(
-  y, X = as.matrix(rep(1,length(y))), df = Inf, L = 10L, lucky = FALSE
+  formula, data = NULL, df = Inf, L = 10L, lucky = FALSE
 ){
   qdistr <- function(x, ...) qt(x, df=df, ...)
   ddistr <- function(x, ...) dt(x, df=df, ...)
-  X <- unname(X)
+  y <- f_eval_lhs(formula, data = data)
+  X <- unname(model.matrix(formula, data = data))
   n <- nrow(X)
   p <- ncol(X)
+  if(Eigen_rank(X) < p){
+    stop("Design is not of full rank.")
+  }
   q <- p + 1L
   # centers of hypercubes (volume 1/L^p)
   centers <- as.matrix(
