@@ -99,10 +99,13 @@ filinreg <- function(
     }
   }
   J <- exp(J)
-  Beta <- `colnames<-`(Theta[, -q], betas)
-  out <- list(Beta = Beta, sigma = Theta[, q], weight = J/sum(J))
+  out <- list(
+    Theta = as.data.frame(`colnames<-`(Theta, c(betas, "sigma"))),
+    weight = J/sum(J)
+  )
   attr(out, "distr") <- distr
   attr(out, "df") <- df
   attr(out, "formula") <- formula
+  class(out) <- "filinreg"
   out
 }
