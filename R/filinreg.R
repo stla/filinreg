@@ -34,7 +34,9 @@ filinreg <- function(
     ddistr <- function(x) dlogis(x, log = TRUE)
   }
   y <- f_eval_lhs(formula, data = data)
-  X <- unname(model.matrix(formula, data = data))
+  X <- model.matrix(formula, data = data)
+  betas <- colnames(X)
+  X <- unname(X)
   n <- nrow(X)
   p <- ncol(X)
   if(Eigen_rank(X) < p){
@@ -97,5 +99,10 @@ filinreg <- function(
     }
   }
   J <- exp(J)
-  list(Beta = Theta[, -q], sigma = Theta[, q], W = J/sum(J))
+  Beta <- `colnames<-`(Theta[, -q], betas)
+  out <- list(Beta = Beta, sigma = Theta[, q], weight = J/sum(J))
+  attr(out, "distr") <- distr
+  attr(out, "df") <- df
+  attr(out, "formula") <- formula
+  out
 }
