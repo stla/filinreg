@@ -17,3 +17,16 @@ inference <- function(fidsamples, param, alpha = 0.05){
   out[2L] <- hsort[ci_m, 1L] # estimate (median)
   out
 }
+
+fiSummary <- function(fidsamples, conf = 0.95){
+  sims <- if(inherits(gfi, "filinreg.pred")){
+    fidsamples[["FPD"]]
+  }else fidsamples[["Theta"]]
+  seq_ <- 1L:ncol(sims)
+  names(seq_) <- names(sims)
+  out <-
+    t(vapply(seq_, function(x) inference(fidsamples, x, 1-conf), numeric(4L)))
+  attr(out, "confidence level") <- conf
+  out
+}
+
