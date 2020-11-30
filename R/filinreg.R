@@ -63,12 +63,12 @@ filinregR <- function(
   # algorithm
   Iiterator <- icombinations(n, q)
   I <- Iiterator$getnext()
-  XI <- X[I, ]
+  XI <- X[I, , drop = FALSE]
   while(Eigen_rank(XI) < p){
     I <- Iiterator$getnext()
-    XI <- X[I, ]
+    XI <- X[I, , drop = FALSE]
   }
-  XmI <- X[-I,]
+  XmI <- X[-I, , drop = FALSE]
   yI <- y[I]
   ymI <- y[-I]
   counter <- 0L
@@ -147,21 +147,25 @@ filinreg <- function(
       expand.grid, rep(list(seq(0, 1, length.out = L+1L)[-1L] - 1/(2*L)), q)
     )
   )
-  # remove centers having equal coordinates (H'H is not invertible)
-  centers <-
-    centers[apply(centers, 1L, function(row) length(unique(row)) > 1L),]
-  M <- (L^q - L) / 2L # number of centers yielding sigma>0
   # algorithm
   Iiterator <- icombinations(n, q)
   I <- Iiterator$getnext()
-  XI <- X[I, ]
+  XI <- X[I, , drop = FALSE]
   while(Eigen_rank(XI) < p){
     I <- Iiterator$getnext()
-    XI <- X[I, ]
+    XI <- X[I, , drop = FALSE]
   }
-  XmI <- X[-I,]
+  XmI <- X[-I, , drop = FALSE]
   yI <- y[I]
   ymI <- y[-I]
+  if(Eigen_rank(cbind(XI, 1)) < q){
+    # remove centers having equal coordinates (H'H is not invertible)
+    centers <-
+      centers[apply(centers, 1L, function(row) length(unique(row)) > 1L),]
+    M <- (L^q - L) / 2L # number of centers yielding sigma>0
+  }else{
+    M <- floor(L^q / 2L) # TODO: test !!! - done, seems OK
+  }
   if(lucky){
     if(distr == "normal"){
       cpp <- f_normal(
@@ -194,6 +198,7 @@ filinreg <- function(
       )
     }
   }else{
+    # xxx
   }
   J <- exp(cpp[["logWeights"]])
   out <- list(

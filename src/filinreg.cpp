@@ -61,6 +61,22 @@ double logdt(const Eigen::VectorXd& x, const double nu){
   return -(nu+1.0)/2.0 * log1p(x.cwiseProduct(x).array() / nu).sum();
 }
 
+Eigen::VectorXd qlogistic(const Eigen::VectorXd& p){
+  Eigen::VectorXd out(p.size());
+  for(auto i = 0; i < p.size(); i++){
+    out(i) = log(p.coeff(i)/(1.0-p.coeff(i)));
+  }
+  return out;
+}
+
+double logdlogistic(const Eigen::VectorXd& x){
+  Eigen::VectorXd out(x.size());
+  for(auto i = 0; i < x.size(); i++){
+    out(i) = -x.coeff(i) - 2*log1p(exp(-x.coeff(i)));
+  }
+  return out.sum();
+}
+
 
 // [[Rcpp::export]]
 Rcpp::List f_normal(
@@ -152,6 +168,38 @@ Rcpp::List f_student(
     if(sigma > 0){
       Eigen::VectorXd v = ymI - XmI * theta.topRows(q-1);
       J(counter) = logdt(v/sigma, nu) - (n-q) * log(sigma);
+      Theta.col(counter) = theta;
+      counter++;
+    }
+  }
+  return Rcpp::List::create(Rcpp::Named("Theta") = Theta.transpose(),
+                            Rcpp::Named("logWeights") = J);
+}
+
+// [[Rcpp::export]]
+Rcpp::List f_logistic(
+    const Eigen::MatrixXd& centers,
+    const Eigen::MatrixXd& XI,
+    const Eigen::MatrixXd& XmI,
+    const Eigen::VectorXd& yI,
+    const Eigen::VectorXd& ymI,
+    const size_t M,
+    const size_t n
+){
+  const size_t ncenters = centers.cols();
+  const size_t q = XI.cols() + 1;
+  size_t counter = 0;
+  Eigen::VectorXd J(M);
+  Eigen::MatrixXd Theta(q, M);
+  for(size_t m = 0; m < ncenters; m++){
+    Eigen::MatrixXd H(q,q);
+    H << XI, qlogistic(centers.col(m));
+    Eigen::MatrixXd Ht = H.transpose();
+    Eigen::VectorXd theta = (Ht * H).inverse() * Ht * yI;
+    double sigma = theta.coeff(q-1);
+    if(sigma > 0){
+      Eigen::VectorXd v = ymI - XmI * theta.topRows(q-1);
+      J(counter) = logdlogistic(v/sigma) - (n-q) * log(sigma);
       Theta.col(counter) = theta;
       counter++;
     }
