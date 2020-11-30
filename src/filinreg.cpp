@@ -1,6 +1,9 @@
 #include <RcppEigen.h>
 #include <boost/math/distributions/normal.hpp>
+#include <boost/math/distributions/students_t.hpp>
+#include <boost/math/special_functions/gamma.hpp>
 using boost::math::normal;
+using boost::math::students_t;
 // [[Rcpp::depends(RcppEigen)]]
 // [[Rcpp::depends(BH)]]
 
@@ -21,6 +24,24 @@ Eigen::VectorXd qnorm(const Eigen::VectorXd& p){
 double logdnorm(const Eigen::VectorXd& x){
   return -(x.size() * log(2 * M_PI) + x.cwiseProduct(x).sum()) / 2;
 }
+
+Eigen::VectorXd qt(const Eigen::VectorXd& p, const double nu){
+  boost::math::students_t t(nu);
+  Eigen::VectorXd out(p.size());
+  for(auto i = 0; i < p.size(); i++){
+    out(i) = quantile(t, p.coeff(i));
+  }
+  return out;
+}
+
+// [[Rcpp::export]]
+double logdt(const Eigen::VectorXd& x, const double nu){
+  return x.size() *
+    (boost::math::lgamma((nu+1.0)/2.0) -
+    boost::math::lgamma(nu/2.0) - log(nu*M_PI)/2.0) -
+    (nu+1.0)/2.0 * log1p(x.cwiseProduct(x).array() / nu).sum();
+}
+
 
 // [[Rcpp::export]]
 Rcpp::List f_normal(
