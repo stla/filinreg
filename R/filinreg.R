@@ -1,124 +1,35 @@
-#' @importFrom Rcpp evalCpp
-#' @useDynLib filinreg
-NULL
-
 #' @name filinreg
 #' @rdname filinreg
 #' @title Fiducial sampler for linear regression model
-#' @description ddd
+#' @description Weighted samples of the fiducial distribution of the
+#'   parameters of a linear regression model with normal, Student, Cauchy, or
+#'   logistic error terms.
 #'
-#' @param formula xx
-#' @param data xx
+#' @param formula two-sided formula defining the model
+#' @param data dataframe containing the data
 #' @param distr the distribution of the error terms, \code{"normal"},
 #'   \code{"student"}, \code{"cauchy"}, or \code{"logistic"}
 #' @param df degrees of freedom of the Student distribution if
 #'   \code{distr = "student"}
-#' @param L xx
-#' @param lucky xx
+#' @param L number of subdivisions of each axis of the hypercube
+#'   \code{(0,1)^(p+1)}
+#' @param lucky logical, whether to perform the matrix inversions in the
+#'   algorithm without checking invertibility; it is possible that some of
+#'   these matrices are not invertible, if you are unlucky
 #'
-#' @return xxx
+#' @return A \code{filinreg} object, list with the fiducial samples and the
+#'   weights.
 #'
-#' @examples xxx
+#' @examples set.seed(666)
+#' x <- c(1, 2, 3, 4)
+#' y <- x + 3 * rcauchy(4L)
+#' fi <- filinreg(y ~ x, distr = "cauchy", L = 30L)
+#' fiSummary(fi)
 #'
 #' @importFrom arrangements icombinations
-#' @importFrom EigenR Eigen_rank Eigen_inverse
-#' @importFrom utils head
-#' @importFrom stats dt qt dlogis qlogis model.matrix as.formula
+#' @importFrom EigenR Eigen_rank
+#' @importFrom stats model.matrix as.formula
 #' @importFrom lazyeval f_eval_lhs f_rhs
-#' @export
-filinregR <- function(
-  formula, data = NULL, distr = "student", df = Inf, L = 10L, lucky = FALSE
-){
-  distr <- match.arg(distr, c("student", "logistic"))
-  if(distr == "student"){
-    qdistr <- function(x) qt(x, df = df)
-    ddistr <- function(x) dt(x, df = df, log = TRUE)
-  }else{
-    qdistr <- function(x) qlogis(x)
-    ddistr <- function(x) dlogis(x, log = TRUE)
-  }
-  y <- f_eval_lhs(formula, data = data)
-  X <- model.matrix(formula, data = data)
-  betas <- colnames(X)
-  X <- unname(X)
-  n <- nrow(X)
-  p <- ncol(X)
-  if(Eigen_rank(X) < p){
-    stop("Design is not of full rank.")
-  }
-  q <- p + 1L
-  # centers of hypercubes (volume 1/L^p)
-  centers <- as.matrix(
-    do.call(
-      expand.grid, rep(list(seq(0, 1, length.out = L+1L)[-1L] - 1/(2*L)), q)
-    )
-  )
-  # remove centers having equal coordinates (H'H is not invertible)
-  centers <-
-    centers[apply(centers, 1L, function(row) length(unique(row)) > 1L),]
-  # outputs
-  M <- (L^q - L) / 2L # number of centers yielding sigma>0
-  J <-  rep(NA_real_, M)
-  Theta <- matrix(NA_real_, nrow = M, ncol = q)
-  # algorithm
-  Iiterator <- icombinations(n, q)
-  I <- Iiterator$getnext()
-  XI <- X[I, , drop = FALSE]
-  while(Eigen_rank(XI) < p){
-    I <- Iiterator$getnext()
-    XI <- X[I, , drop = FALSE]
-  }
-  XmI <- X[-I, , drop = FALSE]
-  yI <- y[I]
-  ymI <- y[-I]
-  counter <- 0L
-  if(lucky){
-    for(m in 1L:nrow(centers)){
-      H <- cbind(XI, qdistr(centers[m, ]))
-      theta <- Eigen_inverse(crossprod(H)) %*% t(H) %*% yI
-      if(theta[q] > 0){ # sigma>0
-        counter <- counter + 1L
-        J[counter] <-
-          sum(ddistr((ymI - XmI %*% head(theta, -1L))/theta[q])) -
-          (n-q) * log(theta[q])
-        Theta[counter,] <- theta
-      }
-    }
-  }else{
-    for(m in 1L:nrow(centers)){
-      H <- cbind(XI, qdistr(centers[m, ]))
-      if(Eigen_rank(H) < q){
-        Theta <- head(Theta, -1L)
-        J <- head(J, -1L)
-        next
-      }
-      theta <- Eigen_inverse(crossprod(H)) %*% t(H) %*% yI
-      if(theta[q] > 0){ # sigma>0
-        counter <- counter + 1L
-        J[counter] <-
-          sum(ddistr((ymI - XmI %*% head(theta, -1L))/theta[q])) -
-          (n-q) * log(theta[q])
-        Theta[counter,] <- theta
-      }
-    }
-  }
-  J <- exp(J)
-  out <- list(
-    Theta = as.data.frame(`colnames<-`(Theta, c(betas, "sigma"))),
-    weight = J/sum(J)
-  )
-  attr(out, "distr") <- distr
-  attr(out, "df") <- df
-  rhs <- as.character(f_rhs(formula))
-  if(rhs[1L] == "+") rhs <- rhs[-1L]
-  attr(out, "formula") <- as.formula(
-    paste0("~ ", paste0(rhs, collapse = " + "))
-  )
-  class(out) <- "filinreg"
-  out
-}
-
-#' @rdname filinreg
 #' @export
 filinreg <- function(
   formula, data = NULL, distr = "student", df = Inf, L = 10L, lucky = TRUE
@@ -147,7 +58,7 @@ filinreg <- function(
       expand.grid, rep(list(seq(0, 1, length.out = L+1L)[-1L] - 1/(2*L)), q)
     )
   )
-  # algorithm
+  # select indices
   Iiterator <- icombinations(n, q)
   I <- Iiterator$getnext()
   XI <- X[I, , drop = FALSE]
@@ -158,6 +69,7 @@ filinreg <- function(
   XmI <- X[-I, , drop = FALSE]
   yI <- y[I]
   ymI <- y[-I]
+  # algorithm
   if(Eigen_rank(cbind(XI, 1)) < q){
     # remove centers having equal coordinates (H'H is not invertible)
     centers <-

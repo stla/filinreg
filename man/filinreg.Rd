@@ -2,18 +2,8 @@
 % Please edit documentation in R/filinreg.R
 \name{filinreg}
 \alias{filinreg}
-\alias{filinregR}
 \title{Fiducial sampler for linear regression model}
 \usage{
-filinregR(
-  formula,
-  data = NULL,
-  distr = "student",
-  df = Inf,
-  L = 10L,
-  lucky = FALSE
-)
-
 filinreg(
   formula,
   data = NULL,
@@ -24,9 +14,9 @@ filinreg(
 )
 }
 \arguments{
-\item{formula}{xx}
+\item{formula}{two-sided formula defining the model}
 
-\item{data}{xx}
+\item{data}{dataframe containing the data}
 
 \item{distr}{the distribution of the error terms, \code{"normal"},
 \code{"student"}, \code{"cauchy"}, or \code{"logistic"}}
@@ -34,17 +24,27 @@ filinreg(
 \item{df}{degrees of freedom of the Student distribution if
 \code{distr = "student"}}
 
-\item{L}{xx}
+\item{L}{number of subdivisions of each axis of the hypercube
+\code{(0,1)^(p+1)}}
 
-\item{lucky}{xx}
+\item{lucky}{logical, whether to perform the matrix inversions in the
+algorithm without checking invertibility; it is possible that some of
+these matrices are not invertible, if you are unlucky}
 }
 \value{
-xxx
+A \code{filinreg} object, list with the fiducial samples and the
+  weights.
 }
 \description{
-ddd
+Weighted samples of the fiducial distribution of the
+  parameters of a linear regression model with normal, Student, Cauchy, or
+  logistic error terms.
 }
 \examples{
-xxx
+set.seed(666)
+x <- c(1, 2, 3, 4)
+y <- x + 3 * rcauchy(4L)
+fi <- filinreg(y ~ x, distr = "cauchy", L = 30L)
+fiSummary(fi)
 
 }
