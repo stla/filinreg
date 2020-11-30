@@ -9,5 +9,7 @@ Description: More about what it does (maybe more than one line)
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
-Imports: lazyeval, stats, utils, arrangements, spatstat, EigenR
+Depends: R (>= 3.1.0)
+Imports: Rcpp, lazyeval, stats, utils, arrangements, spatstat, EigenR
+LinkingTo: Rcpp, RcppEigen, BH
 RoxygenNote: 7.1.1

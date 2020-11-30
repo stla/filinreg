@@ -1,3 +1,7 @@
+#' @importFrom Rcpp evalCpp
+#' @useDynLib filinreg
+NULL
+
 #' @name filinreg
 #' @rdname filinreg
 #' @title Fiducial sampler for linear regression model
