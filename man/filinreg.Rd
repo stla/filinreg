@@ -28,8 +28,8 @@ filinreg(
 
 \item{data}{xx}
 
-\item{distr}{the distribution of the error terms, \code{"student"} or
-\code{"logistic"}}
+\item{distr}{the distribution of the error terms, \code{"normal"},
+\code{"student"}, \code{"cauchy"}, or \code{"logistic"}}
 
 \item{df}{degrees of freedom of the Student distribution if
 \code{distr = "student"}}

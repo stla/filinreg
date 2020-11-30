@@ -7,7 +7,7 @@ new <- data.frame(x = c(-3,3))
 predict(lm(y ~ x), new, interval = "prediction")
 
 
-fi <- filinreg(y ~ x, L = 100L, lucky = TRUE)
+fi <- filinreg(y ~ x, L = 100L, distr = "normal", lucky = TRUE)
 
 fpred <- filinregPredictive(fi, new)
 fiSummary(fpred)

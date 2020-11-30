@@ -34,10 +34,29 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// f_student
+Rcpp::List f_student(const Eigen::MatrixXd& centers, const Eigen::MatrixXd& XI, const Eigen::MatrixXd& XmI, const Eigen::VectorXd& yI, const Eigen::VectorXd& ymI, const size_t M, const size_t n, const double nu);
+RcppExport SEXP _filinreg_f_student(SEXP centersSEXP, SEXP XISEXP, SEXP XmISEXP, SEXP yISEXP, SEXP ymISEXP, SEXP MSEXP, SEXP nSEXP, SEXP nuSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type centers(centersSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type XI(XISEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type XmI(XmISEXP);
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type yI(yISEXP);
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type ymI(ymISEXP);
+    Rcpp::traits::input_parameter< const size_t >::type M(MSEXP);
+    Rcpp::traits::input_parameter< const size_t >::type n(nSEXP);
+    Rcpp::traits::input_parameter< const double >::type nu(nuSEXP);
+    rcpp_result_gen = Rcpp::wrap(f_student(centers, XI, XmI, yI, ymI, M, n, nu));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_filinreg_test", (DL_FUNC) &_filinreg_test, 1},
     {"_filinreg_f_normal", (DL_FUNC) &_filinreg_f_normal, 7},
+    {"_filinreg_f_student", (DL_FUNC) &_filinreg_f_student, 8},
     {NULL, NULL, 0}
 };
 

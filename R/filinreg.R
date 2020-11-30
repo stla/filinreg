@@ -9,8 +9,8 @@ NULL
 #'
 #' @param formula xx
 #' @param data xx
-#' @param distr the distribution of the error terms, \code{"student"} or
-#'   \code{"logistic"}
+#' @param distr the distribution of the error terms, \code{"normal"},
+#'   \code{"student"}, \code{"cauchy"}, or \code{"logistic"}
 #' @param df degrees of freedom of the Student distribution if
 #'   \code{distr = "student"}
 #' @param L xx
@@ -123,7 +123,14 @@ filinregR <- function(
 filinreg <- function(
   formula, data = NULL, distr = "student", df = Inf, L = 10L, lucky = TRUE
 ){
-  distr <- match.arg(distr, c("normal", "student", "logistic"))
+  distr <- match.arg(distr, c("normal", "student", "cauchy", "logistic"))
+  if(distr == "student"){
+    if(df == Inf){
+      distr <- "normal"
+    }else if(df == 1){
+      distr <- "cauchy"
+    }
+  }
   y <- f_eval_lhs(formula, data = data)
   X <- model.matrix(formula, data = data)
   betas <- colnames(X)
@@ -156,12 +163,36 @@ filinreg <- function(
   yI <- y[I]
   ymI <- y[-I]
   if(lucky){
-    cpp <- f_normal(
-      centers = t(centers),
-      XI = XI, XmI = XmI,
-      yI = yI, ymI = ymI,
-      M = M, n = n
-    )
+    if(distr == "normal"){
+      cpp <- f_normal(
+        centers = t(centers),
+        XI = XI, XmI = XmI,
+        yI = yI, ymI = ymI,
+        M = M, n = n
+      )
+    }else if(distr == "student"){
+      cpp <- f_student(
+        centers = t(centers),
+        XI = XI, XmI = XmI,
+        yI = yI, ymI = ymI,
+        M = M, n = n,
+        nu = df
+      )
+    }else if(distr == "cauchy"){
+      cpp <- f_cauchy(
+        centers = t(centers),
+        XI = XI, XmI = XmI,
+        yI = yI, ymI = ymI,
+        M = M, n = n
+      )
+    }else if(distr == "logistic"){
+      cpp <- f_logistic(
+        centers = t(centers),
+        XI = XI, XmI = XmI,
+        yI = yI, ymI = ymI,
+        M = M, n = n
+      )
+    }
   }else{
   }
   J <- exp(cpp[["logWeights"]])

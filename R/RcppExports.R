@@ -9,3 +9,7 @@ f_normal <- function(centers, XI, XmI, yI, ymI, M, n) {
     .Call('_filinreg_f_normal', PACKAGE = 'filinreg', centers, XI, XmI, yI, ymI, M, n)
 }
 
+f_student <- function(centers, XI, XmI, yI, ymI, M, n, nu) {
+    .Call('_filinreg_f_student', PACKAGE = 'filinreg', centers, XI, XmI, yI, ymI, M, n, nu)
+}
+
