@@ -26,7 +26,7 @@ NULL
 #' @importFrom stats dt qt dlogis qlogis model.matrix as.formula
 #' @importFrom lazyeval f_eval_lhs f_rhs
 #' @export
-filinreg <- function(
+filinregR <- function(
   formula, data = NULL, distr = "student", df = Inf, L = 10L, lucky = FALSE
 ){
   distr <- match.arg(distr, c("student", "logistic"))
@@ -105,6 +105,68 @@ filinreg <- function(
   J <- exp(J)
   out <- list(
     Theta = as.data.frame(`colnames<-`(Theta, c(betas, "sigma"))),
+    weight = J/sum(J)
+  )
+  attr(out, "distr") <- distr
+  attr(out, "df") <- df
+  rhs <- as.character(f_rhs(formula))
+  if(rhs[1L] == "+") rhs <- rhs[-1L]
+  attr(out, "formula") <- as.formula(
+    paste0("~ ", paste0(rhs, collapse = " + "))
+  )
+  class(out) <- "filinreg"
+  out
+}
+
+#' @rdname filinreg
+#' @export
+filinreg <- function(
+  formula, data = NULL, distr = "student", df = Inf, L = 10L, lucky = TRUE
+){
+  distr <- match.arg(distr, c("normal", "student", "logistic"))
+  y <- f_eval_lhs(formula, data = data)
+  X <- model.matrix(formula, data = data)
+  betas <- colnames(X)
+  X <- unname(X)
+  n <- nrow(X)
+  p <- ncol(X)
+  if(Eigen_rank(X) < p){
+    stop("Design is not of full rank.")
+  }
+  q <- p + 1L
+  # centers of hypercubes (volume 1/L^p)
+  centers <- as.matrix(
+    do.call(
+      expand.grid, rep(list(seq(0, 1, length.out = L+1L)[-1L] - 1/(2*L)), q)
+    )
+  )
+  # remove centers having equal coordinates (H'H is not invertible)
+  centers <-
+    centers[apply(centers, 1L, function(row) length(unique(row)) > 1L),]
+  M <- (L^q - L) / 2L # number of centers yielding sigma>0
+  # algorithm
+  Iiterator <- icombinations(n, q)
+  I <- Iiterator$getnext()
+  XI <- X[I, ]
+  while(Eigen_rank(XI) < p){
+    I <- Iiterator$getnext()
+    XI <- X[I, ]
+  }
+  XmI <- X[-I,]
+  yI <- y[I]
+  ymI <- y[-I]
+  if(lucky){
+    cpp <- f_normal(
+      centers = t(centers),
+      XI = XI, XmI = XmI,
+      yI = yI, ymI = ymI,
+      M = M, n = n
+    )
+  }else{
+  }
+  J <- exp(cpp[["logWeights"]])
+  out <- list(
+    Theta = as.data.frame(`colnames<-`(cpp[["Theta"]], c(betas, "sigma"))),
     weight = J/sum(J)
   )
   attr(out, "distr") <- distr

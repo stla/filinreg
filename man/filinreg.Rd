@@ -2,15 +2,25 @@
 % Please edit documentation in R/filinreg.R
 \name{filinreg}
 \alias{filinreg}
+\alias{filinregR}
 \title{Fiducial sampler for linear regression model}
 \usage{
-filinreg(
+filinregR(
   formula,
   data = NULL,
   distr = "student",
   df = Inf,
   L = 10L,
   lucky = FALSE
+)
+
+filinreg(
+  formula,
+  data = NULL,
+  distr = "student",
+  df = Inf,
+  L = 10L,
+  lucky = TRUE
 )
 }
 \arguments{
